@@ -6,6 +6,7 @@ import Footer from "@/components/Footer/Footer";
 import EmailForm from "@/components/Email/Email";
 
 import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const sections = [
   {
@@ -174,6 +175,8 @@ export default function Home() {
         </div>
       </section>
       <Footer />
+
+      <SpeedInsights />
       <Analytics />
     </main>
   );
