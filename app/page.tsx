@@ -21,7 +21,7 @@ const sections = [
   {
     title: "PROGRAMACIONES",
     text: `Mantente al tanto de todos los bailes, noticias y eventos que se realizarán en Valencia y en otros lugares. Si quieres vernos en acción, no te pierdas nuestras actualizaciones. En este apartado iremos subiendo publicaciones periódicas con toda la información sobre nuestras próximas presentaciones, actividades culturales y cualquier novedad relacionada con la danza ecuatoriana.`,
-    image: "/logo/logosintitulo.PNG",
+    image: "/logo/logosintitulo.png",
   },
   {
     title: "NUESTRA GALERÍA",
