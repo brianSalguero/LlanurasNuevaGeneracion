@@ -5,6 +5,8 @@ import ImagesSlide from "@/components/home/ImagesSlide";
 import Footer from "@/components/Footer/Footer";
 import EmailForm from "@/components/Email/Email";
 
+import { Analytics } from "@vercel/analytics/next"
+
 const sections = [
   {
     title: "¡VEN A DISFRUTAR CON NOSOTROS!",
@@ -172,6 +174,7 @@ export default function Home() {
         </div>
       </section>
       <Footer />
+      <Analytics />
     </main>
   );
 }
