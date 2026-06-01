@@ -137,8 +137,8 @@ export default function AdminPage() {
       }
 
       const { error } = await supabase.auth.signInWithPassword({
-        email: process.env.NEXT_PUBLIC_SUPABASE_ADMIN_EMAIL!,
-        password: process.env.NEXT_PUBLIC_SUPABASE_ADMIN_PASSWORD!,
+        email: "briansalguero200217@gmail.com",
+        password: password,
       });
 
       if (error) {
