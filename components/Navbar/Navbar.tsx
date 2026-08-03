@@ -60,6 +60,7 @@ export default function Navbar() {
 
         {/* MOBILE BUTTON */}
         <button
+          type="button"
           onClick={() => setOpen(!open)}
           className="md:hidden text-white z-10000"
         >

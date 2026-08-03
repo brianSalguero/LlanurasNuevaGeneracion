@@ -35,9 +35,9 @@ export default function CookieBanner() {
   return (
     <div className="fixed bottom-4 left-1/2 z-50 w-[95%] max-w-4xl -translate-x-1/2">
       <div className="rounded-2xl border border-white/10 bg-zinc-900/95 backdrop-blur-xl shadow-2xl">
-        
+
         <div className="flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between">
-          
+
           <div className="max-w-2xl">
             <h2 className="mb-2 text-lg font-semibold text-white">
               🍪 Configuración de cookies
@@ -51,8 +51,9 @@ export default function CookieBanner() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            
+
             <button
+              type="button"
               onClick={rejectCookies}
               className="rounded-xl border border-zinc-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-zinc-800"
             >
@@ -60,6 +61,7 @@ export default function CookieBanner() {
             </button>
 
             <button
+              type="button"
               onClick={acceptCookies}
               className="rounded-xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:scale-105"
             >
