@@ -249,7 +249,7 @@ export default function Dashboard({ session }: DashboardProps) {
     <div className="flex-1 bg-slate-100 dark:bg-slate-950 min-h-screen p-6">
 
       {/* Header */}
-      <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div className="mb-8 flex flex-col items-center text-center md:flex-row md:text-left md:items-center gap-5">
 
         <div className="flex items-center gap-5">
 
@@ -266,7 +266,7 @@ export default function Dashboard({ session }: DashboardProps) {
           )}
 
           <div>
-            <h1 className="text-4xl font-bold text-slate-800 dark:text-white">
+            <h1 className="text-2xl md:text-4xl font-bold text-slate-800 dark:text-white">
               ¡Bienvenido, {session.nombre}! 👋
             </h1>
 
@@ -286,12 +286,12 @@ export default function Dashboard({ session }: DashboardProps) {
       </div>
 
       {/* Cards superiores */}
-      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 border border-slate-200 dark:border-slate-800">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 md:p-6 border border-slate-200 dark:border-slate-800">
           <p className="text-slate-500 text-sm">Integrantes</p>
 
-          <h2 className="text-4xl font-bold mt-3 text-slate-800 dark:text-white">
+          <h2 className="text-3xl md:text-4xl font-bold mt-3 text-slate-800 dark:text-white">
             {totalIntegrantes}
           </h2>
 
@@ -311,7 +311,7 @@ export default function Dashboard({ session }: DashboardProps) {
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 border border-slate-200 dark:border-slate-800">
           <p className="text-slate-500 text-sm">Caja actual</p>
 
-          <h2 className="text-4xl font-bold mt-3 text-amber-500">
+          <h2 className="text-3xl md:text-4xl font-bold mt-3 text-amber-500">
             {cajaActual.toFixed(2)} €
           </h2>
 
@@ -360,7 +360,7 @@ export default function Dashboard({ session }: DashboardProps) {
             Cuotas pendientes
           </p>
 
-          <h2 className="text-4xl font-bold mt-3 text-red-500">
+          <h2 className="text-3xl md:text-4xl font-bold mt-3 text-red-500">
             {deuda.toFixed(2)} €
           </h2>
 
@@ -379,12 +379,12 @@ export default function Dashboard({ session }: DashboardProps) {
 
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-              Últimos movimientos (Sin contar las cuotas)
+              Últimos movimientos
             </h3>
 
             <button
               onClick={() => setOpenMovimientos(true)}
-              className="text-sm bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition"
+              className="text-xs md:text-sm px-3 md:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg"
             >
               Ver todos
             </button>
@@ -394,10 +394,10 @@ export default function Dashboard({ session }: DashboardProps) {
             {movimientos.map((movimiento) => (
               <div
                 key={movimiento.id}
-                className="flex justify-between items-center"
+                className="flex items-center"
               >
-                <div>
-                  <p className="font-semibold text-slate-700 dark:text-white">
+                <div className="flex-1 w-18">
+                  <p className="font-semibold text-slate-700 dark:text-white truncate">
                     {movimiento.concepto}
                   </p>
 
@@ -407,9 +407,9 @@ export default function Dashboard({ session }: DashboardProps) {
                 </div>
 
                 <span
-                  className={`font-bold ${movimiento.tipo === "ingreso"
-                    ? "text-green-600"
-                    : "text-red-500"
+                  className={`w-18 text-right font-bold whitespace-nowrap ${movimiento.tipo === "ingreso"
+                      ? "text-green-600"
+                      : "text-red-500"
                     }`}
                 >
                   {movimiento.tipo === "ingreso" ? "+" : "-"}
@@ -430,7 +430,7 @@ export default function Dashboard({ session }: DashboardProps) {
 
             <button
               onClick={() => setOpenCuotas(true)}
-              className="text-sm bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition"
+              className="text-xs md:text-sm px-3 md:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg"
             >
               Ver todos
             </button>
@@ -489,17 +489,17 @@ export default function Dashboard({ session }: DashboardProps) {
       {/* Tercera fila*/}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 mt-8">
         <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-              Próximos eventos
-            </h3>
+          <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+            Próximos eventos
+          </h3>
 
-            <button
-              onClick={() => setOpenEventos(true)}
-              className="text-sm bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition"
-            >
-              Ver todos
-            </button>
-          </div>
+          <button
+            onClick={() => setOpenEventos(true)}
+            className="text-xs md:text-sm px-3 md:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg"
+          >
+            Ver todos
+          </button>
+        </div>
 
         <div className="space-y-5">
 
