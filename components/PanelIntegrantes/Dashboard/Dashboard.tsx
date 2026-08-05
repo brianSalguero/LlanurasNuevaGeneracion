@@ -10,8 +10,19 @@ type DashboardProps = {
 
 import { useEffect, useState } from "react";
 import { supabase } from '@/lib/supabase';
+import Modal from "@/components/PanelIntegrantes/Modal/Modal";
 
 export default function Dashboard({ session }: DashboardProps) {
+
+  // MODALES
+  const [openMovimientos, setOpenMovimientos] = useState(false);
+  const [openCuotas, setOpenCuotas] = useState(false);
+  const [openEventos, setOpenEventos] = useState(false);
+
+  // DATOS COMPLETOS
+  const [todosMovimientos, setTodosMovimientos] = useState<any[]>([]);
+  const [todasCuotas, setTodasCuotas] = useState<any[]>([]);
+  const [todosEventos, setTodosEventos] = useState<any[]>([]);
 
   // INTEGRANTES //
   const [totalIntegrantes, setTotalIntegrantes] = useState(0);
@@ -179,6 +190,47 @@ export default function Dashboard({ session }: DashboardProps) {
     setEventos(data);
   };
 
+  const fetchTodosMovimientos = async () => {
+    const { data, error } = await supabase
+      .from("movimientos")
+      .select("*")
+      .in("tipo", ["ingreso", "gasto"])
+      .gte("fecha", "2026-01-01")
+      .lt("fecha", "2027-01-01")
+      .order("fecha", { ascending: false });
+
+    if (error || !data) return;
+
+    setTodosMovimientos(data);
+  };
+
+  const fetchTodasCuotas = async () => {
+    const { data, error } = await supabase
+      .from("cuotas")
+      .select("*")
+      .eq("integrante_id", session.id)
+      .eq("anio", 2026)
+      .order("mes", { ascending: false });
+
+    if (error || !data) return;
+
+    setTodasCuotas(data);
+  };
+
+  const fetchTodosEventos = async () => {
+    const hoy = new Date().toISOString().split("T")[0];
+
+    const { data, error } = await supabase
+      .from("eventos")
+      .select("*")
+      .gte("fecha", hoy)
+      .order("fecha", { ascending: true });
+
+    if (error || !data) return;
+
+    setTodosEventos(data);
+  };
+
   useEffect(() => {
     fetchIntegrantes();
     fetchCaja();
@@ -186,6 +238,11 @@ export default function Dashboard({ session }: DashboardProps) {
     fetchMovimientos();
     fetchUltimasCuotas();
     fetchEventos();
+
+    // Modales
+    fetchTodosMovimientos();
+    fetchTodasCuotas();
+    fetchTodosEventos();
   }, []);
 
   return (
@@ -320,9 +377,18 @@ export default function Dashboard({ session }: DashboardProps) {
         {/* Movimientos */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
 
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6">
-            Últimos movimientos (Sin contar las cuotas)
-          </h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+              Últimos movimientos (Sin contar las cuotas)
+            </h3>
+
+            <button
+              onClick={() => setOpenMovimientos(true)}
+              className="text-sm bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition"
+            >
+              Ver todos
+            </button>
+          </div>
 
           <div className="space-y-5">
             {movimientos.map((movimiento) => (
@@ -357,10 +423,18 @@ export default function Dashboard({ session }: DashboardProps) {
 
         {/* Últimas cuotas */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+              Últimas cuotas pagadas
+            </h3>
 
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6">
-            Últimas cuotas pagadas
-          </h3>
+            <button
+              onClick={() => setOpenCuotas(true)}
+              className="text-sm bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition"
+            >
+              Ver todos
+            </button>
+          </div>
 
           <div className="space-y-5">
 
@@ -414,10 +488,18 @@ export default function Dashboard({ session }: DashboardProps) {
 
       {/* Tercera fila*/}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 mt-8">
+        <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+              Próximos eventos
+            </h3>
 
-        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6">
-          Próximos eventos
-        </h3>
+            <button
+              onClick={() => setOpenEventos(true)}
+              className="text-sm bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition"
+            >
+              Ver todos
+            </button>
+          </div>
 
         <div className="space-y-5">
 
@@ -451,6 +533,130 @@ export default function Dashboard({ session }: DashboardProps) {
         </div>
 
       </div>
+
+      {/* ================= MODAL MOVIMIENTOS ================= */}
+
+      <Modal
+        open={openMovimientos}
+        onClose={() => setOpenMovimientos(false)}
+        title="Movimientos 2026"
+      >
+        <div className="space-y-4">
+          {todosMovimientos.map((movimiento) => (
+            <div
+              key={movimiento.id}
+              className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3"
+            >
+              <div>
+                <p className="font-semibold">
+                  {movimiento.concepto}
+                </p>
+
+                <p className="text-sm text-slate-500">
+                  {new Date(movimiento.fecha).toLocaleDateString("es-ES")}
+                </p>
+              </div>
+
+              <span
+                className={`font-bold ${movimiento.tipo === "ingreso"
+                  ? "text-green-600"
+                  : "text-red-500"
+                  }`}
+              >
+                {movimiento.tipo === "ingreso" ? "+" : "-"}
+                {Number(movimiento.importe).toFixed(2)} €
+              </span>
+            </div>
+          ))}
+        </div>
+      </Modal>
+
+      {/* ================= MODAL CUOTAS ================= */}
+
+      <Modal
+        open={openCuotas}
+        onClose={() => setOpenCuotas(false)}
+        title="Cuotas 2026"
+      >
+        <div className="space-y-4">
+
+          {todasCuotas.map((cuota) => (
+            <div
+              key={cuota.id}
+              className="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3"
+            >
+              <div>
+                <p className="font-semibold">
+                  {[
+                    "Enero",
+                    "Febrero",
+                    "Marzo",
+                    "Abril",
+                    "Mayo",
+                    "Junio",
+                    "Julio",
+                    "Agosto",
+                    "Septiembre",
+                    "Octubre",
+                    "Noviembre",
+                    "Diciembre",
+                  ][cuota.mes - 1]} {cuota.anio}
+                </p>
+
+                <p className="text-sm text-slate-500">
+                  {new Date(cuota.fecha).toLocaleDateString("es-ES")}
+                </p>
+              </div>
+
+              <span className="font-bold text-green-600">
+                {Number(cuota.importe).toFixed(2)} €
+              </span>
+            </div>
+          ))}
+
+        </div>
+      </Modal>
+
+      {/* ================= MODAL EVENTOS ================= */}
+
+      <Modal
+        open={openEventos}
+        onClose={() => setOpenEventos(false)}
+        title="Próximos eventos"
+      >
+        <div className="space-y-4">
+
+          {todosEventos.map((evento) => (
+            <div
+              key={evento.id}
+              className="border-l-4 border-amber-500 pl-4"
+            >
+              <p className="font-semibold text-lg">
+                {evento.titulo}
+              </p>
+
+              <p className="text-slate-500">
+                {new Date(evento.fecha).toLocaleDateString("es-ES", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+
+                {evento.hora &&
+                  ` · ${evento.hora.split(":").slice(0, 2).join(":")}`}
+              </p>
+
+              {evento.lugar && (
+                <p className="text-sm text-slate-500 mt-1">
+                  📍 {evento.lugar}
+                </p>
+              )}
+            </div>
+          ))}
+
+        </div>
+      </Modal>
 
     </div>
   );
