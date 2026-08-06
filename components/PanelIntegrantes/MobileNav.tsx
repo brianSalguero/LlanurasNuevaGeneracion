@@ -1,15 +1,25 @@
 import { supabase } from '@/lib/supabase';
 
-type Section = 'Dashboard' | 'members' | 'gallery';
+type Section = 'Dashboard' | 'Integrantes' | 'MisCuotas' | 'Cuotas';
 
 type Props = {
   section: Section;
   setSection: (s: Section) => void;
   onLogout: () => void;
+  session: {
+    id: number;
+    nombre: string;
+    apellido?: string;
+    imagen?: string | null;
+    rol?: string;
+  };
 };
 
 
-export default function MobileNav({ section, setSection, onLogout }: Props) {
+export default function MobileNav({ section, setSection, onLogout, session }: Props) {
+
+  const usuariosCuotas = [1, 2, 3, 15];
+  const puedeVerCuotas = usuariosCuotas.includes(session.id);
 
   const btnClass = (active: boolean) =>
     `flex-1 py-3 font-semibold transition ${active
@@ -24,22 +34,30 @@ export default function MobileNav({ section, setSection, onLogout }: Props) {
         onClick={() => setSection('Dashboard')}
         className={btnClass(section === 'Dashboard')}
       >
-        Panel de control
+        Panel
       </button>
 
       <button
-        onClick={() => setSection('members')}
-        className={btnClass(section === 'members')}
+        onClick={() => setSection('Integrantes')}
+        className={btnClass(section === 'Integrantes')}
       >
         Integrantes
       </button>
 
       <button
-        onClick={() => setSection('gallery')}
-        className={btnClass(section === 'gallery')}
+        onClick={() => setSection('MisCuotas')}
+        className={btnClass(section === 'MisCuotas')}
       >
-        Galería
+        Mis Cuotas
       </button>
+      {puedeVerCuotas && (
+        <button
+          onClick={() => setSection('Cuotas')}
+          className={btnClass(section === 'Cuotas')}
+        >
+          Cuotas
+        </button>
+      )}
       <button
         onClick={onLogout}
         className="md:hidden fixed bottom-4 left-4 bg-red-500 hover:bg-red-600 transition text-white font-bold py-3 px-6 rounded-xl shadow-lg z-50"

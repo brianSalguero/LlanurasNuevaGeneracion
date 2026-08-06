@@ -6,8 +6,13 @@ import IntegrantesLayout from "@/components/PanelIntegrantes/IntegrantesLayout";
 import Sidebar from "@/components/PanelIntegrantes/Sidebar";
 import MobileNav from "@/components/PanelIntegrantes/MobileNav";
 import Dashboard from "@/components/PanelIntegrantes/Dashboard/Dashboard";
+import Integrantes from "@/components/PanelIntegrantes/Integrantes/Integrantes";
+import MisCuotas from "@/components/PanelIntegrantes/MisCuotas/MisCuotas";
+import Cuotas from "@/components/PanelIntegrantes/Cuotas/Cuotas";
 
-type Section = "Dashboard" | "members" | "gallery";
+import { supabase } from "@/lib/supabase";
+
+type Section = "Dashboard" | "Integrantes" | "MisCuotas" | "Cuotas";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -23,6 +28,8 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   const [section, setSection] = useState<Section>("Dashboard");
+
+  const [integrantes, setIntegrantes] = useState<any[]>([]);
 
   // =========================
   // LOGIN
@@ -78,6 +85,17 @@ export default function DashboardPage() {
     router.refresh();
   };
 
+  const fetchIntegrantes = async () => {
+    const { data, error } = await supabase
+      .from("integrantes")
+      .select("*")
+      .order("nombre");
+
+    if (!error && data) {
+      setIntegrantes(data);
+    }
+  };
+
   // =========================
   // COMPROBAR SESIÓN
   // =========================
@@ -91,6 +109,7 @@ export default function DashboardPage() {
 
         if (data.logged) {
           setSession(data.user);
+          await fetchIntegrantes();
         } else {
           setSession(null);
         }
@@ -211,18 +230,23 @@ export default function DashboardPage() {
         section={section}
         setSection={setSection}
         onLogout={handleLogout}
+        session={session}
       />
 
       <MobileNav
         section={section}
         setSection={setSection}
         onLogout={handleLogout}
+        session={session}
       />
-            <div className="flex-1 md:ml-72 p-6 overflow-x-hidden pt-10">
-      
-              {section === 'Dashboard' && <Dashboard session={session} />}
-      
-            </div>
+      <div className="flex-1 md:ml-72 p-6 overflow-x-hidden pt-10">
+
+        {section === 'Dashboard' && <Dashboard session={session} />}
+        {section === 'Integrantes' && <Integrantes integrantes={integrantes} />}
+        {section === 'MisCuotas' && <MisCuotas session={session} />}
+        {section === 'Cuotas' && <Cuotas integrantes={integrantes} session={session} />}
+
+      </div>
     </IntegrantesLayout>
   );
 }

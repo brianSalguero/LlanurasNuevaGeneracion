@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
         nombre: integrante.nombre,
         apellido: integrante.apellido,
         rol: integrante.rol,
+        fecha_alta: integrante.fecha_alta,
       },
     });
 
@@ -40,7 +41,8 @@ export async function POST(req: NextRequest) {
       nombre: integrante.nombre,
       apellido: integrante.apellido,
       rol: integrante.rol,
-      imagen: integrante.imagen
+      imagen: integrante.imagen,
+      fecha_alta: integrante.fecha_alta
     }), {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

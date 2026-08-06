@@ -18,11 +18,14 @@ export default function Dashboard({ session }: DashboardProps) {
   const [openMovimientos, setOpenMovimientos] = useState(false);
   const [openCuotas, setOpenCuotas] = useState(false);
   const [openEventos, setOpenEventos] = useState(false);
+  const [openCumpleanos, setOpenCumpleanos] = useState(false);
+
 
   // DATOS COMPLETOS
   const [todosMovimientos, setTodosMovimientos] = useState<any[]>([]);
   const [todasCuotas, setTodasCuotas] = useState<any[]>([]);
   const [todosEventos, setTodosEventos] = useState<any[]>([]);
+  const [todosCumpleanos, setTodosCumpleanos] = useState<any[]>([]);
 
   // INTEGRANTES //
   const [totalIntegrantes, setTotalIntegrantes] = useState(0);
@@ -44,6 +47,9 @@ export default function Dashboard({ session }: DashboardProps) {
 
   // Eventos //
   const [eventos, setEventos] = useState<any[]>([]);
+
+  // Cumpleaños //
+  const [cumpleanios, setCumpleanios] = useState<any[]>([]);
 
   const fetchIntegrantes = async () => {
     const { data, error } = await supabase
@@ -231,6 +237,44 @@ export default function Dashboard({ session }: DashboardProps) {
     setTodosEventos(data);
   };
 
+  const fetchCumpleanios = async () => {
+    const { data, error } = await supabase
+      .from("integrantes")
+      .select("id, nombre, apellido, imagen, fecha_nacimiento");
+
+    if (error || !data) return;
+
+    const hoy = new Date();
+
+    const ordenados = data
+      .filter((p) => p.fecha_nacimiento)
+      .map((persona) => {
+        const nacimiento = new Date(persona.fecha_nacimiento);
+
+        const proximo = new Date(
+          hoy.getFullYear(),
+          nacimiento.getMonth(),
+          nacimiento.getDate()
+        );
+
+        if (proximo < hoy) {
+          proximo.setFullYear(hoy.getFullYear() + 1);
+        }
+
+        return {
+          ...persona,
+          proximoCumple: proximo,
+        };
+      })
+      .sort(
+        (a, b) =>
+          a.proximoCumple.getTime() - b.proximoCumple.getTime()
+      );
+
+    setCumpleanios(ordenados.slice(0, 4)); // Dashboard
+    setTodosCumpleanos(ordenados);          // Modal
+  };
+
   useEffect(() => {
     fetchIntegrantes();
     fetchCaja();
@@ -238,6 +282,7 @@ export default function Dashboard({ session }: DashboardProps) {
     fetchMovimientos();
     fetchUltimasCuotas();
     fetchEventos();
+    fetchCumpleanios();
 
     // Modales
     fetchTodosMovimientos();
@@ -408,8 +453,8 @@ export default function Dashboard({ session }: DashboardProps) {
 
                 <span
                   className={`w-18 text-right font-bold whitespace-nowrap ${movimiento.tipo === "ingreso"
-                      ? "text-green-600"
-                      : "text-red-500"
+                    ? "text-green-600"
+                    : "text-red-500"
                     }`}
                 >
                   {movimiento.tipo === "ingreso" ? "+" : "-"}
@@ -487,51 +532,112 @@ export default function Dashboard({ session }: DashboardProps) {
       </div>
 
       {/* Tercera fila*/}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 mt-8">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-            Próximos eventos
-          </h3>
+      <div className="grid gap-6 mt-8 lg:grid-cols-2">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+              Próximos eventos
+            </h3>
 
-          <button
-            onClick={() => setOpenEventos(true)}
-            className="text-xs md:text-sm px-3 md:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg"
-          >
-            Ver todos
-          </button>
-        </div>
-
-        <div className="space-y-5">
-
-          {eventos.map((evento) => (
-            <div
-              key={evento.id}
-              className="border-l-4 border-amber-500 pl-4"
+            <button
+              onClick={() => setOpenEventos(true)}
+              className="text-xs md:text-sm px-3 md:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg"
             >
-              <p className="font-semibold text-slate-800 dark:text-white">
-                {evento.titulo}
-              </p>
+              Ver todos
+            </button>
+          </div>
 
-              <p className="text-sm text-slate-500">
-                {new Date(evento.fecha).toLocaleDateString("es-ES", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                })}
-                {evento.hora &&
-                  ` · ${evento.hora.split(":").slice(0, 2).join(":")}`}
-              </p>
-            </div>
-          ))}
+          <div className="space-y-5">
 
-          {eventos.length === 0 && (
-            <p className="text-slate-500 text-center">
-              No hay eventos próximos.
-            </p>
-          )}
+            {eventos.map((evento) => (
+              <div
+                key={evento.id}
+                className="border-l-4 border-amber-500 pl-4"
+              >
+                <p className="font-semibold text-slate-800 dark:text-white">
+                  {evento.titulo}
+                </p>
+
+                <p className="text-sm text-slate-500">
+                  {new Date(evento.fecha).toLocaleDateString("es-ES", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                  {evento.hora &&
+                    ` · ${evento.hora.split(":").slice(0, 2).join(":")}`}
+                </p>
+              </div>
+            ))}
+
+            {eventos.length === 0 && (
+              <p className="text-slate-500 text-center">
+                No hay eventos próximos.
+              </p>
+            )}
+
+          </div>
 
         </div>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6">
 
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+              Próximos cumpleaños
+            </h3>
+
+            <button
+              onClick={() => setOpenCumpleanos(true)}
+              className="text-xs md:text-sm px-3 md:px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg"
+            >
+              Ver todos
+            </button>
+          </div>
+
+          <div className="space-y-5">
+
+            {cumpleanios.map((persona) => (
+              <div
+                key={persona.id}
+                className="flex items-center gap-4"
+              >
+                {persona.imagen ? (
+                  <img
+                    src={persona.imagen}
+                    alt={persona.nombre}
+                    className="w-12 h-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold">
+                    {persona.nombre[0]}
+                  </div>
+                )}
+
+                <div>
+                  <p className="font-semibold text-slate-800 dark:text-white">
+                    {persona.nombre} {persona.apellido}
+                  </p>
+
+                  <p className="text-sm text-slate-500">
+                    🎂{" "}
+                    {persona.proximoCumple.toLocaleDateString("es-ES", {
+                      day: "numeric",
+                      month: "long",
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))}
+
+            {cumpleanios.length === 0 && (
+              <p className="text-center text-slate-500">
+                No hay cumpleaños próximos.
+              </p>
+            )}
+
+          </div>
+
+        </div>
       </div>
 
       {/* ================= MODAL MOVIMIENTOS ================= */}
@@ -658,6 +764,49 @@ export default function Dashboard({ session }: DashboardProps) {
         </div>
       </Modal>
 
+      {/* ================ MODAL CUMPLEAÑOS ================ */}
+      <Modal
+        open={openCumpleanos}
+        onClose={() => setOpenCumpleanos(false)}
+        title="Próximos cumpleaños"
+      >
+        <div className="space-y-4">
+
+          {todosCumpleanos.map((persona) => (
+            <div
+              key={persona.id}
+              className="flex items-center gap-4 border-b border-slate-200 dark:border-slate-700 pb-3"
+            >
+              {persona.imagen ? (
+                <img
+                  src={persona.imagen}
+                  alt={persona.nombre}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center text-white font-bold">
+                  {persona.nombre.charAt(0)}
+                </div>
+              )}
+
+              <div className="flex-1">
+                <p className="font-semibold">
+                  {persona.nombre} {persona.apellido}
+                </p>
+
+                <p className="text-sm text-slate-500">
+                  {persona.proximoCumple.toLocaleDateString("es-ES", {
+                    weekday: "long",
+                    day: "numeric",
+                    month: "long",
+                  })}
+                </p>
+              </div>
+            </div>
+          ))}
+
+        </div>
+      </Modal>
     </div>
   );
 }
