@@ -1,5 +1,3 @@
-import { supabase } from '@/lib/supabase';
-
 type Section = 'Dashboard' | 'Integrantes' | 'MisCuotas' | 'Cuotas';
 
 type Props = {
@@ -22,7 +20,7 @@ export default function MobileNav({ section, setSection, onLogout, session }: Pr
   const puedeVerCuotas = usuariosCuotas.includes(session.id);
 
   const btnClass = (active: boolean) =>
-    `flex-1 py-3 font-semibold transition ${active
+    `flex-1 py-3 text-sm font-semibold transition ${active
       ? 'bg-amber-500 text-white'
       : 'hover:bg-slate-200 dark:hover:bg-slate-800'
     }`;

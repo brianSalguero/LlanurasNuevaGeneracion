@@ -221,67 +221,236 @@ export default function MisCuotas({ session }: Props) {
             </div>
 
             {/* Meses */}
-            <div className="mt-10">
+            {/* Meses */}
+<div className="mt-10">
 
-                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">
-                    Año {anioActual}
-                </h2>
+    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">
+        Año {anioActual}
+    </h2>
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {meses.map((mes) => {
 
-                        const styles =
-                            mes.estado === "no_corresponde"
-                                ? "bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-700 opacity-50"
-                                : mes.estado === "pagado"
-                                    ? "bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700"
-                                    : mes.estado === "actual"
-                                        ? "bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700"
-                                        : "bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-700";
+    {/* MÓVIL */}
+    <div className="md:hidden">
 
-                        const texto =
-                            mes.estado === "no_corresponde"
-                                ? "— No pertenecía al grupo"
-                                : mes.estado === "pagado"
-                                    ? "✅ Pagada"
-                                    : mes.estado === "actual"
-                                        ? "🕒 Pendiente"
-                                        : "— Próximamente";
+        <div className="
+            bg-white
+            dark:bg-slate-900
+            rounded-3xl
+            border
+            border-slate-200
+            dark:border-slate-800
+            p-6
+        ">
 
-                        return (
-                            <div
-                                key={mes.numeroMes}
-                                className={`rounded-2xl border p-5 md:p-6 transition hover:shadow-lg ${styles}`}
+            <div className="flex justify-between items-center">
+
+                <div>
+                    <p className="text-sm text-slate-500">
+                        Progreso de cuotas
+                    </p>
+
+                    <p className="text-3xl font-bold text-slate-800 dark:text-white mt-1">
+                        {totalPagadas}/{numMeses}
+                    </p>
+                </div>
+
+
+                <div className="
+                    w-16
+                    h-16
+                    rounded-full
+                    bg-green-100
+                    dark:bg-green-950
+                    flex
+                    items-center
+                    justify-center
+                    text-green-600
+                    font-bold
+                ">
+                    {Math.round(porcentaje)}%
+                </div>
+
+            </div>
+
+
+            {/* Barra */}
+            <div className="
+                mt-6
+                h-3
+                bg-slate-200
+                dark:bg-slate-700
+                rounded-full
+                overflow-hidden
+            ">
+                <div
+                    className="
+                        h-full
+                        bg-green-500
+                        transition-all
+                    "
+                    style={{
+                        width: `${porcentaje}%`
+                    }}
+                />
+            </div>
+
+
+
+            {/* Meses pagados */}
+            <div className="mt-6">
+
+                <p className="text-sm text-slate-500 mb-3">
+                    Meses pagados
+                </p>
+
+
+                <div className="flex flex-wrap gap-2">
+
+                    {meses
+                        .filter(m => m.estado === "pagado")
+                        .map(m => (
+
+                            <span
+                                key={m.numeroMes}
+                                className="
+                                    px-3
+                                    py-1.5
+                                    rounded-full
+                                    bg-green-100
+                                    dark:bg-green-950
+                                    text-green-700
+                                    dark:text-green-400
+                                    text-sm
+                                    font-semibold
+                                "
                             >
-                                <h3 className="text-lg md:text-xl font-bold text-slate-800 dark:text-white">
-                                    {mes.nombre}
-                                </h3>
+                                {m.nombre.slice(0,3)}
+                            </span>
 
-                                <p className="mt-5 text-lg font-semibold">
-                                    {texto}
-                                </p>
+                        ))}
 
-                                {mes.cuota && (
-                                    <>
-                                        <p className="mt-4 text-sm text-slate-500">
-                                            Pagada el{" "}
-                                            {new Date(mes.cuota.fecha).toLocaleDateString("es-ES")}
-                                        </p>
 
-                                        <p className="mt-1 font-semibold text-green-600">
-                                            {Number(mes.cuota.importe).toFixed(2)} €
-                                        </p>
-                                    </>
-                                )}
-
-                            </div>
-                        );
-
-                    })}
+                    {totalPagadas === 0 && (
+                        <span className="text-slate-500 text-sm">
+                            Ninguna cuota pagada
+                        </span>
+                    )}
 
                 </div>
 
             </div>
+
+
+
+            {/* Próxima cuota */}
+            <div className="
+                mt-6
+                pt-5
+                border-t
+                border-slate-200
+                dark:border-slate-700
+            ">
+
+                <p className="text-sm text-slate-500">
+                    Próxima cuota
+                </p>
+
+
+                <p className="mt-1 font-bold text-lg text-amber-500">
+
+                    {proximaPendiente
+                        ? `${proximaPendiente.nombre} ${anioActual}`
+                        : "Todas pagadas 🎉"}
+
+                </p>
+
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+
+    {/* ESCRITORIO */}
+    <div className="
+        hidden
+        md:grid
+        gap-4
+        sm:grid-cols-2
+        lg:grid-cols-3
+        xl:grid-cols-4
+    ">
+
+        {meses.map((mes) => {
+
+            const styles =
+                mes.estado === "no_corresponde"
+                    ? "bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-700 opacity-50"
+                    : mes.estado === "pagado"
+                        ? "bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700"
+                        : mes.estado === "actual"
+                            ? "bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700"
+                            : "bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-700";
+
+
+            const texto =
+                mes.estado === "no_corresponde"
+                    ? "— No pertenecía al grupo"
+                    : mes.estado === "pagado"
+                        ? "✅ Pagada"
+                        : mes.estado === "actual"
+                            ? "🕒 Pendiente"
+                            : "— Próximamente";
+
+
+            return (
+                <div
+                    key={mes.numeroMes}
+                    className={`
+                        rounded-2xl
+                        border
+                        p-5
+                        transition
+                        hover:shadow-lg
+                        ${styles}
+                    `}
+                >
+
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+                        {mes.nombre}
+                    </h3>
+
+
+                    <p className="mt-5 font-semibold">
+                        {texto}
+                    </p>
+
+
+                    {mes.cuota && (
+                        <>
+                            <p className="mt-4 text-sm text-slate-500">
+                                Pagada el{" "}
+                                {new Date(mes.cuota.fecha)
+                                    .toLocaleDateString("es-ES")}
+                            </p>
+
+                            <p className="mt-1 font-semibold text-green-600">
+                                {Number(mes.cuota.importe).toFixed(2)} €
+                            </p>
+                        </>
+                    )}
+
+                </div>
+            );
+
+        })}
+
+    </div>
+
+</div>
 
             {/* Historial */}
             <div className="mt-10 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-8">

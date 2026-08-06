@@ -19,7 +19,7 @@ export default function Dashboard({ session }: DashboardProps) {
   const [openCuotas, setOpenCuotas] = useState(false);
   const [openEventos, setOpenEventos] = useState(false);
   const [openCumpleanos, setOpenCumpleanos] = useState(false);
-
+  const [openPassword, setOpenPassword] = useState(false);
 
   // DATOS COMPLETOS
   const [todosMovimientos, setTodosMovimientos] = useState<any[]>([]);
@@ -50,6 +50,15 @@ export default function Dashboard({ session }: DashboardProps) {
 
   // Cumpleaños //
   const [cumpleanios, setCumpleanios] = useState<any[]>([]);
+
+  // CAMBIO CONTRASEÑA //
+  const [passwordActual, setPasswordActual] = useState("");
+  const [passwordNueva, setPasswordNueva] = useState("");
+  const [passwordRepetir, setPasswordRepetir] = useState("");
+
+  const [loadingPassword, setLoadingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
 
   const fetchIntegrantes = async () => {
     const { data, error } = await supabase
@@ -289,6 +298,79 @@ export default function Dashboard({ session }: DashboardProps) {
     fetchTodasCuotas();
     fetchTodosEventos();
   }, []);
+
+  const cambiarPassword = async () => {
+
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (!passwordActual || !passwordNueva || !passwordRepetir) {
+      setPasswordError("Completa todos los campos.");
+      return;
+    }
+
+    if (passwordNueva.length < 8) {
+      setPasswordError("La contraseña debe tener al menos 8 caracteres.");
+      return;
+    }
+
+    if (passwordNueva !== passwordRepetir) {
+      setPasswordError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setLoadingPassword(true);
+
+    try {
+      const res = await fetch("/api/cambiarContrasena", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: session.id,
+          passwordActual,
+          passwordNueva,
+        }),
+      });
+
+      const text = await res.text();
+      const data = JSON.parse(text);
+
+      if (!res.ok) {
+        setPasswordError(data.message);
+        return;
+      }
+
+      setPasswordSuccess(data.message);
+
+      setPasswordActual("");
+      setPasswordNueva("");
+      setPasswordRepetir("");
+
+      setTimeout(() => {
+        cerrarModalPassword();
+      }, 1000);
+
+    } catch (err) {
+      console.error(err);
+      setPasswordError("Ha ocurrido un error.");
+    } finally {
+      setLoadingPassword(false);
+    }
+
+  };
+
+  const cerrarModalPassword = () => {
+    setOpenPassword(false);
+
+    setPasswordActual("");
+    setPasswordNueva("");
+    setPasswordRepetir("");
+
+    setPasswordError("");
+    setPasswordSuccess("");
+  };
 
   return (
     <div className="flex-1 bg-slate-100 dark:bg-slate-950 min-h-screen p-6">
@@ -639,6 +721,24 @@ export default function Dashboard({ session }: DashboardProps) {
 
         </div>
       </div>
+      <div className="mt-8 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6">
+
+        <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+          Seguridad
+        </h3>
+
+        <p className="text-slate-500 mt-2">
+          Cambia tu contraseña siempre que quieras.
+        </p>
+
+        <button
+          onClick={() => setOpenPassword(true)}
+          className="mt-5 bg-amber-500 hover:bg-amber-600 text-white px-5 py-3 rounded-xl font-semibold"
+        >
+          Cambiar contraseña
+        </button>
+
+      </div>
 
       {/* ================= MODAL MOVIMIENTOS ================= */}
 
@@ -806,6 +906,64 @@ export default function Dashboard({ session }: DashboardProps) {
           ))}
 
         </div>
+      </Modal>
+
+      <Modal
+        open={openPassword}
+        onClose={cerrarModalPassword}
+        title="Cambiar contraseña"
+      >
+
+        <div className="space-y-4">
+
+          <input
+            type="password"
+            placeholder="Contraseña actual"
+            value={passwordActual}
+            onChange={(e) => setPasswordActual(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3"
+          />
+
+          <input
+            type="password"
+            placeholder="Nueva contraseña"
+            value={passwordNueva}
+            onChange={(e) => setPasswordNueva(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3"
+          />
+
+          <input
+            type="password"
+            placeholder="Repetir nueva contraseña"
+            value={passwordRepetir}
+            onChange={(e) => setPasswordRepetir(e.target.value)}
+            className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3"
+          />
+
+          {passwordError && (
+            <p className="text-red-500 text-sm">
+              {passwordError}
+            </p>
+          )}
+
+          {passwordSuccess && (
+            <p className="text-green-600 text-sm">
+              {passwordSuccess}
+            </p>
+          )}
+
+          <button
+            onClick={cambiarPassword}
+            disabled={loadingPassword}
+            className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-xl disabled:opacity-50"
+          >
+            {loadingPassword
+              ? "Guardando..."
+              : "Actualizar contraseña"}
+          </button>
+
+        </div>
+
       </Modal>
     </div>
   );

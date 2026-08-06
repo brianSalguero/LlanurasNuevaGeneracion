@@ -46,9 +46,10 @@ export default function CuotaCard({
         hover:shadow-lg
         hover:-translate-y-1
         transition
-        p-6
+        p-4
+        md:p-6
         text-left
-      "
+    "
         >
             {/* Foto */}
             <div className="flex justify-center">
@@ -58,8 +59,10 @@ export default function CuotaCard({
                         src={integrante.imagen}
                         alt={integrante.nombre}
                         className="
-              w-28
-              h-28
+              w-20
+              h-20
+              md:w-28
+              md:h-28
               rounded-full
               object-cover
               border-4
@@ -69,15 +72,18 @@ export default function CuotaCard({
                 ) : (
                     <div
                         className="
-              w-28
-              h-28
+              w-20
+              h-20
+              md:w-28
+              md:h-28
               rounded-full
               bg-slate-300
               dark:bg-slate-700
               flex
               items-center
               justify-center
-              text-4xl
+              text-3xl
+              md:text-4xl
               font-bold
             "
                     >
@@ -90,25 +96,40 @@ export default function CuotaCard({
             {/* Información */}
             <div className="mt-5 text-center">
 
-                <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+                <h2 className="
+text-lg
+md:text-xl
+font-bold
+text-slate-800
+dark:text-white
+truncate
+">
                     {integrante.nombre} {integrante.apellido}
                 </h2>
 
-                <p className="text-slate-500 mt-1">
+                <p className="text-sm text-slate-500 mt-1 truncate">
                     {integrante.rol}
                 </p>
 
             </div>
 
             {/* Resumen */}
-            <div className="mt-6">
+            <div className="mt-4 md:mt-6">
 
                 <div className="flex justify-between text-sm text-slate-500 mb-2">
                     <span>Cuotas pagadas</span>
                     <span>{cuotasPagadas}/{numMeses}</span>
                 </div>
 
-                <div className="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                <div className="
+w-full
+h-2.5
+md:h-3
+rounded-full
+bg-slate-200
+dark:bg-slate-700
+overflow-hidden
+">
                     <div
                         className="h-full bg-green-500 transition-all"
                         style={{
@@ -117,7 +138,15 @@ export default function CuotaCard({
                     />
                 </div>
 
-                <div className="mt-4 flex justify-between items-center">
+                <div className="
+mt-4
+flex
+flex-col
+gap-3
+sm:flex-row
+sm:justify-between
+sm:items-center
+">
 
                     <div>
                         <p className="text-xs text-slate-500">
@@ -128,22 +157,7 @@ export default function CuotaCard({
                             {cuotasPagadas * 5} €
                         </p>
                     </div>
-
-                    <div
-                        className="
-              bg-amber-500
-              text-white
-              font-semibold
-              px-4
-              py-2
-              rounded-xl
-            "
-                    >
-                        Gestionar
-                    </div>
-
                 </div>
-
             </div>
         </button>
     );

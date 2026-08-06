@@ -147,7 +147,6 @@ export default function Cuotas({ integrantes, session }: Props) {
     return (
         <>
             <div className="flex-1 min-h-screen bg-slate-100 dark:bg-slate-950 p-6">
-
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold text-slate-800 dark:text-white">
@@ -167,27 +166,35 @@ export default function Cuotas({ integrantes, session }: Props) {
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                         className="
-              w-full
-              max-w-md
-              rounded-xl
-              border
-              border-slate-300
-              dark:border-slate-700
-              bg-white
-              dark:bg-slate-900
-              px-4
-              py-3
-              outline-none
-              focus:border-amber-500
-              focus:ring-2
-              focus:ring-amber-500/20
-            "
+w-full
+rounded-xl
+border
+border-slate-300
+dark:border-slate-700
+bg-white
+dark:bg-slate-900
+px-4
+py-2.5
+text-sm
+outline-none
+focus:border-amber-500
+focus:ring-2
+focus:ring-amber-500/20
+"
                     />
                 </div>
 
                 {/* Cards */}
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-
+                <div className="
+grid 
+grid-cols-1
+xs:grid-cols-2
+sm:grid-cols-2
+lg:grid-cols-3
+xl:grid-cols-4
+gap-4
+md:gap-6
+">
                     {integrantesFiltrados.map((integrante) => (
                         <CuotaCard
                             key={integrante.id}
