@@ -16,7 +16,6 @@ export async function POST(req: NextRequest) {
       "$2b$12$4g7Xf6b4x8M0Gv3zX4Q4He7U3iJf8D4Y5e8P9N0Q1R2S3T4U5V6W";
 
     const hash = integrante?.contrasena ?? hashFalso;
-
     const passwordCorrecta = await bcrypt.compare(password, hash);
 
     if (error || !integrante || !passwordCorrecta) {
@@ -39,6 +38,7 @@ export async function POST(req: NextRequest) {
       rol: integrante.rol,
       imagen: integrante.imagen,
       fecha_alta: integrante.fecha_alta,
+      inicio_cuotas: integrante.inicio_cuotas,
     };
 
     const response = NextResponse.json({

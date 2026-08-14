@@ -7,6 +7,7 @@ type Props = {
     session: {
         id: number;
         fecha_alta: Date;
+        inicio_cuotas?: string | null;
     };
 };
 
@@ -51,21 +52,55 @@ export default function MisCuotas({ session }: Props) {
     }, []);
 
     const hoy = new Date();
+
     const anioActual = hoy.getFullYear();
     const mesActual = hoy.getMonth() + 1;
-    const fechaAlta = new Date(session.fecha_alta);
 
-    const anioAlta = fechaAlta.getFullYear();
-    const mesAlta = fechaAlta.getMonth() + 1;
+    /*
+     * ==========================================
+     * INICIO REAL DE LAS CUOTAS
+     * ==========================================
+     *
+     * Si existe inicio_cuotas usamos esa fecha.
+     *
+     * Si no existe, usamos fecha_alta.
+     *
+     * Ejemplo:
+     *
+     * inicio_cuotas = 2026-08-01
+     *
+     * Entonces:
+     * Enero-Julio -> No corresponde
+     * Agosto-Diciembre -> Sí corresponde
+     */
 
+    const fechaInicioCuotas = session.inicio_cuotas
+        ? new Date(session.inicio_cuotas)
+        : new Date(session.fecha_alta);
 
-    const numMeses =
-        anioAlta === anioActual
-            ? 12 - mesAlta + 1
-            : 12;
+    const anioInicioCuotas = fechaInicioCuotas.getFullYear();
+    const mesInicioCuotas = fechaInicioCuotas.getMonth() + 1;
+
+    /*
+     * ==========================================
+     * NÚMERO DE MESES QUE DEBE PAGAR ESTE AÑO
+     * ==========================================
+     */
+
+    let numMeses = 0;
+
+    if (anioActual > anioInicioCuotas) {
+        // Ya llevaba pagando desde años anteriores
+        numMeses = 12;
+    } else if (anioActual === anioInicioCuotas) {
+        // Empieza este mismo año
+        numMeses = 12 - mesInicioCuotas + 1;
+    } else {
+        // Todavía no ha comenzado a pagar
+        numMeses = 0;
+    }
 
     const meses = useMemo(() => {
-
         return nombresMeses.map((nombre, index) => {
 
             const numeroMes = index + 1;
@@ -74,27 +109,62 @@ export default function MisCuotas({ session }: Props) {
                 (c) => c.mes === numeroMes
             );
 
-
-            let estado: "pagado" | "actual" | "futuro" | "no_corresponde" =
+            let estado:
+                | "pagado"
+                | "actual"
+                | "futuro"
+                | "no_corresponde" =
                 "futuro";
 
+            /*
+             * ==========================================
+             * MESES ANTERIORES AL INICIO DE CUOTAS
+             * ==========================================
+             *
+             * Para una integrante que empieza en agosto:
+             *
+             * Enero -> no corresponde
+             * Febrero -> no corresponde
+             * ...
+             * Julio -> no corresponde
+             */
 
-            // Antes de la fecha de alta
             if (
-                anioAlta === anioActual &&
-                numeroMes < mesAlta
+                anioActual < anioInicioCuotas ||
+                (
+                    anioActual === anioInicioCuotas &&
+                    numeroMes < mesInicioCuotas
+                )
             ) {
                 estado = "no_corresponde";
             }
+
+            /*
+             * Si la cuota existe en Supabase,
+             * está pagada.
+             */
 
             else if (cuota) {
                 estado = "pagado";
             }
 
+            /*
+             * Si el mes ya ha llegado y no está pagado,
+             * está pendiente.
+             */
+
             else if (numeroMes <= mesActual) {
                 estado = "actual";
             }
 
+            /*
+             * Si todavía no ha llegado,
+             * será futura.
+             */
+
+            else {
+                estado = "futuro";
+            }
 
             return {
                 nombre,
@@ -102,26 +172,46 @@ export default function MisCuotas({ session }: Props) {
                 estado,
                 cuota,
             };
-
         });
 
     }, [
         cuotas,
         mesActual,
-        mesAlta,
-        anioAlta,
+        mesInicioCuotas,
+        anioInicioCuotas,
         anioActual
     ]);
 
+    /*
+     * ==========================================
+     * TOTAL DE CUOTAS PAGADAS
+     * ==========================================
+     */
+
     const totalPagadas = cuotas.length;
 
-    const porcentaje = Math.min(
-        (totalPagadas / numMeses) * 100,
-        100
-    );
+    /*
+     * ==========================================
+     * PORCENTAJE
+     * ==========================================
+     */
+
+    const porcentaje =
+        numMeses > 0
+            ? Math.min(
+                (totalPagadas / numMeses) * 100,
+                100
+            )
+            : 0;
 
     const ultimaCuota =
-        cuotas.length > 0 ? cuotas[cuotas.length - 1] : null;
+        cuotas.length > 0
+            ? cuotas[cuotas.length - 1]
+            : null;
+
+    /*
+     * Buscamos la primera cuota pendiente.
+     */
 
     const proximaPendiente = meses.find(
         (m) => m.estado === "actual"
@@ -167,8 +257,11 @@ export default function MisCuotas({ session }: Props) {
                     </p>
 
                     <h2
-                        className={`text-2xl md:text-3xl font-bold mt-2 ${proximaPendiente ? "text-red-500" : "text-green-600"
-                            }`}
+                        className={`text-2xl md:text-3xl font-bold mt-2 ${
+                            proximaPendiente
+                                ? "text-red-500"
+                                : "text-green-600"
+                        }`}
                     >
                         {estadoGeneral}
                     </h2>
@@ -195,7 +288,6 @@ export default function MisCuotas({ session }: Props) {
 
                 </div>
 
-
                 {/* Progreso */}
                 <div className="w-full lg:flex-1">
 
@@ -221,236 +313,216 @@ export default function MisCuotas({ session }: Props) {
             </div>
 
             {/* Meses */}
-            {/* Meses */}
-<div className="mt-10">
+            <div className="mt-10">
 
-    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">
-        Año {anioActual}
-    </h2>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6">
+                    Año {anioActual}
+                </h2>
 
+                {/* MÓVIL */}
+                <div className="md:hidden">
 
-    {/* MÓVIL */}
-    <div className="md:hidden">
-
-        <div className="
-            bg-white
-            dark:bg-slate-900
-            rounded-3xl
-            border
-            border-slate-200
-            dark:border-slate-800
-            p-6
-        ">
-
-            <div className="flex justify-between items-center">
-
-                <div>
-                    <p className="text-sm text-slate-500">
-                        Progreso de cuotas
-                    </p>
-
-                    <p className="text-3xl font-bold text-slate-800 dark:text-white mt-1">
-                        {totalPagadas}/{numMeses}
-                    </p>
-                </div>
-
-
-                <div className="
-                    w-16
-                    h-16
-                    rounded-full
-                    bg-green-100
-                    dark:bg-green-950
-                    flex
-                    items-center
-                    justify-center
-                    text-green-600
-                    font-bold
-                ">
-                    {Math.round(porcentaje)}%
-                </div>
-
-            </div>
-
-
-            {/* Barra */}
-            <div className="
-                mt-6
-                h-3
-                bg-slate-200
-                dark:bg-slate-700
-                rounded-full
-                overflow-hidden
-            ">
-                <div
-                    className="
-                        h-full
-                        bg-green-500
-                        transition-all
-                    "
-                    style={{
-                        width: `${porcentaje}%`
-                    }}
-                />
-            </div>
-
-
-
-            {/* Meses pagados */}
-            <div className="mt-6">
-
-                <p className="text-sm text-slate-500 mb-3">
-                    Meses pagados
-                </p>
-
-
-                <div className="flex flex-wrap gap-2">
-
-                    {meses
-                        .filter(m => m.estado === "pagado")
-                        .map(m => (
-
-                            <span
-                                key={m.numeroMes}
-                                className="
-                                    px-3
-                                    py-1.5
-                                    rounded-full
-                                    bg-green-100
-                                    dark:bg-green-950
-                                    text-green-700
-                                    dark:text-green-400
-                                    text-sm
-                                    font-semibold
-                                "
-                            >
-                                {m.nombre.slice(0,3)}
-                            </span>
-
-                        ))}
-
-
-                    {totalPagadas === 0 && (
-                        <span className="text-slate-500 text-sm">
-                            Ninguna cuota pagada
-                        </span>
-                    )}
-
-                </div>
-
-            </div>
-
-
-
-            {/* Próxima cuota */}
-            <div className="
-                mt-6
-                pt-5
-                border-t
-                border-slate-200
-                dark:border-slate-700
-            ">
-
-                <p className="text-sm text-slate-500">
-                    Próxima cuota
-                </p>
-
-
-                <p className="mt-1 font-bold text-lg text-amber-500">
-
-                    {proximaPendiente
-                        ? `${proximaPendiente.nombre} ${anioActual}`
-                        : "Todas pagadas 🎉"}
-
-                </p>
-
-            </div>
-
-
-        </div>
-
-    </div>
-
-
-
-
-    {/* ESCRITORIO */}
-    <div className="
-        hidden
-        md:grid
-        gap-4
-        sm:grid-cols-2
-        lg:grid-cols-3
-        xl:grid-cols-4
-    ">
-
-        {meses.map((mes) => {
-
-            const styles =
-                mes.estado === "no_corresponde"
-                    ? "bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-700 opacity-50"
-                    : mes.estado === "pagado"
-                        ? "bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700"
-                        : mes.estado === "actual"
-                            ? "bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700"
-                            : "bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-700";
-
-
-            const texto =
-                mes.estado === "no_corresponde"
-                    ? "— No pertenecía al grupo"
-                    : mes.estado === "pagado"
-                        ? "✅ Pagada"
-                        : mes.estado === "actual"
-                            ? "🕒 Pendiente"
-                            : "— Próximamente";
-
-
-            return (
-                <div
-                    key={mes.numeroMes}
-                    className={`
-                        rounded-2xl
+                    <div className="
+                        bg-white
+                        dark:bg-slate-900
+                        rounded-3xl
                         border
-                        p-5
-                        transition
-                        hover:shadow-lg
-                        ${styles}
-                    `}
-                >
+                        border-slate-200
+                        dark:border-slate-800
+                        p-6
+                    ">
 
-                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">
-                        {mes.nombre}
-                    </h3>
+                        <div className="flex justify-between items-center">
 
+                            <div>
+                                <p className="text-sm text-slate-500">
+                                    Progreso de cuotas
+                                </p>
 
-                    <p className="mt-5 font-semibold">
-                        {texto}
-                    </p>
+                                <p className="text-3xl font-bold text-slate-800 dark:text-white mt-1">
+                                    {totalPagadas}/{numMeses}
+                                </p>
+                            </div>
 
+                            <div className="
+                                w-16
+                                h-16
+                                rounded-full
+                                bg-green-100
+                                dark:bg-green-950
+                                flex
+                                items-center
+                                justify-center
+                                text-green-600
+                                font-bold
+                            ">
+                                {Math.round(porcentaje)}%
+                            </div>
 
-                    {mes.cuota && (
-                        <>
-                            <p className="mt-4 text-sm text-slate-500">
-                                Pagada el{" "}
-                                {new Date(mes.cuota.fecha)
-                                    .toLocaleDateString("es-ES")}
+                        </div>
+
+                        {/* Barra */}
+                        <div className="
+                            mt-6
+                            h-3
+                            bg-slate-200
+                            dark:bg-slate-700
+                            rounded-full
+                            overflow-hidden
+                        ">
+                            <div
+                                className="
+                                    h-full
+                                    bg-green-500
+                                    transition-all
+                                "
+                                style={{
+                                    width: `${porcentaje}%`
+                                }}
+                            />
+                        </div>
+
+                        {/* Meses pagados */}
+                        <div className="mt-6">
+
+                            <p className="text-sm text-slate-500 mb-3">
+                                Meses pagados
                             </p>
 
-                            <p className="mt-1 font-semibold text-green-600">
-                                {Number(mes.cuota.importe).toFixed(2)} €
+                            <div className="flex flex-wrap gap-2">
+
+                                {meses
+                                    .filter(m => m.estado === "pagado")
+                                    .map(m => (
+
+                                        <span
+                                            key={m.numeroMes}
+                                            className="
+                                                px-3
+                                                py-1.5
+                                                rounded-full
+                                                bg-green-100
+                                                dark:bg-green-950
+                                                text-green-700
+                                                dark:text-green-400
+                                                text-sm
+                                                font-semibold
+                                            "
+                                        >
+                                            {m.nombre.slice(0, 3)}
+                                        </span>
+
+                                    ))}
+
+                                {totalPagadas === 0 && (
+                                    <span className="text-slate-500 text-sm">
+                                        Ninguna cuota pagada
+                                    </span>
+                                )}
+
+                            </div>
+
+                        </div>
+
+                        {/* Próxima cuota */}
+                        <div className="
+                            mt-6
+                            pt-5
+                            border-t
+                            border-slate-200
+                            dark:border-slate-700
+                        ">
+
+                            <p className="text-sm text-slate-500">
+                                Próxima cuota
                             </p>
-                        </>
-                    )}
+
+                            <p className="mt-1 font-bold text-lg text-amber-500">
+
+                                {proximaPendiente
+                                    ? `${proximaPendiente.nombre} ${anioActual}`
+                                    : "Todas pagadas 🎉"}
+
+                            </p>
+
+                        </div>
+
+                    </div>
 
                 </div>
-            );
 
-        })}
+                {/* ESCRITORIO */}
+                <div className="
+                    hidden
+                    md:grid
+                    gap-4
+                    sm:grid-cols-2
+                    lg:grid-cols-3
+                    xl:grid-cols-4
+                ">
 
-    </div>
+                    {meses.map((mes) => {
 
-</div>
+                        const styles =
+                            mes.estado === "no_corresponde"
+                                ? "bg-slate-200 border-slate-300 dark:bg-slate-800 dark:border-slate-700 opacity-50"
+                                : mes.estado === "pagado"
+                                    ? "bg-green-50 border-green-300 dark:bg-green-950/30 dark:border-green-700"
+                                    : mes.estado === "actual"
+                                        ? "bg-amber-50 border-amber-300 dark:bg-amber-950/30 dark:border-amber-700"
+                                        : "bg-slate-50 border-slate-300 dark:bg-slate-900 dark:border-slate-700";
+
+                        const texto =
+                            mes.estado === "no_corresponde"
+                                ? "— No corresponde"
+                                : mes.estado === "pagado"
+                                    ? "✅ Pagada"
+                                    : mes.estado === "actual"
+                                        ? "🕒 Pendiente"
+                                        : "— Próximamente";
+
+                        return (
+                            <div
+                                key={mes.numeroMes}
+                                className={`
+                                    rounded-2xl
+                                    border
+                                    p-5
+                                    transition
+                                    hover:shadow-lg
+                                    ${styles}
+                                `}
+                            >
+
+                                <h3 className="text-xl font-bold text-slate-800 dark:text-white">
+                                    {mes.nombre}
+                                </h3>
+
+                                <p className="mt-5 font-semibold">
+                                    {texto}
+                                </p>
+
+                                {mes.cuota && (
+                                    <>
+                                        <p className="mt-4 text-sm text-slate-500">
+                                            Pagada el{" "}
+                                            {new Date(mes.cuota.fecha)
+                                                .toLocaleDateString("es-ES")}
+                                        </p>
+
+                                        <p className="mt-1 font-semibold text-green-600">
+                                            {Number(mes.cuota.importe).toFixed(2)} €
+                                        </p>
+                                    </>
+                                )}
+
+                            </div>
+                        );
+                    })}
+
+                </div>
+
+            </div>
 
             {/* Historial */}
             <div className="mt-10 bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 p-8">
@@ -472,7 +544,9 @@ export default function MisCuotas({ session }: Props) {
 
                             {[...cuotas]
                                 .sort((a, b) =>
-                                    a.anio !== b.anio ? b.anio - a.anio : b.mes - a.mes
+                                    a.anio !== b.anio
+                                        ? b.anio - a.anio
+                                        : b.mes - a.mes
                                 )
                                 .map((cuota) => (
 
@@ -481,22 +555,32 @@ export default function MisCuotas({ session }: Props) {
                                         className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-slate-900"
                                     >
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">Fecha</span>
+                                            <span className="text-slate-500">
+                                                Fecha
+                                            </span>
+
                                             <span>
-                                                {new Date(cuota.fecha).toLocaleDateString("es-ES")}
+                                                {new Date(cuota.fecha)
+                                                    .toLocaleDateString("es-ES")}
                                             </span>
                                         </div>
 
                                         <div className="flex justify-between mt-3 gap-4">
-                                            <span className="text-slate-500">Concepto</span>
+                                            <span className="text-slate-500">
+                                                Concepto
+                                            </span>
 
                                             <span className="font-medium text-right">
-                                                Cuota {nombresMeses[cuota.mes - 1]} {cuota.anio}
+                                                Cuota{" "}
+                                                {nombresMeses[cuota.mes - 1]}{" "}
+                                                {cuota.anio}
                                             </span>
                                         </div>
 
                                         <div className="flex justify-between mt-3">
-                                            <span className="text-slate-500">Importe</span>
+                                            <span className="text-slate-500">
+                                                Importe
+                                            </span>
 
                                             <span className="font-bold text-green-600">
                                                 {Number(cuota.importe).toFixed(2)} €
@@ -515,9 +599,17 @@ export default function MisCuotas({ session }: Props) {
 
                                 <thead>
                                     <tr className="border-b border-slate-200 dark:border-slate-700">
-                                        <th className="text-left py-3">Fecha</th>
-                                        <th className="text-left py-3">Concepto</th>
-                                        <th className="text-right py-3">Importe</th>
+                                        <th className="text-left py-3">
+                                            Fecha
+                                        </th>
+
+                                        <th className="text-left py-3">
+                                            Concepto
+                                        </th>
+
+                                        <th className="text-right py-3">
+                                            Importe
+                                        </th>
                                     </tr>
                                 </thead>
 
@@ -525,7 +617,9 @@ export default function MisCuotas({ session }: Props) {
 
                                     {[...cuotas]
                                         .sort((a, b) =>
-                                            a.anio !== b.anio ? b.anio - a.anio : b.mes - a.mes
+                                            a.anio !== b.anio
+                                                ? b.anio - a.anio
+                                                : b.mes - a.mes
                                         )
                                         .map((cuota) => (
 
@@ -534,11 +628,14 @@ export default function MisCuotas({ session }: Props) {
                                                 className="border-b border-slate-100 dark:border-slate-800"
                                             >
                                                 <td className="py-4">
-                                                    {new Date(cuota.fecha).toLocaleDateString("es-ES")}
+                                                    {new Date(cuota.fecha)
+                                                        .toLocaleDateString("es-ES")}
                                                 </td>
 
                                                 <td>
-                                                    Cuota {nombresMeses[cuota.mes - 1]} {cuota.anio}
+                                                    Cuota{" "}
+                                                    {nombresMeses[cuota.mes - 1]}{" "}
+                                                    {cuota.anio}
                                                 </td>
 
                                                 <td className="text-right font-semibold text-green-600">

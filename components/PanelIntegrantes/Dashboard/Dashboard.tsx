@@ -114,15 +114,20 @@ export default function Dashboard({ session }: DashboardProps) {
   };
 
   const fetchDeuda = async () => {
-    const { data, error } = await supabase
-      .from("cuotas")
-      .select("mes, anio")
-      .eq("integrante_id", session.id)
-      .order("anio", { ascending: false })
-      .order("mes", { ascending: false })
-      .limit(1);
+    // Obtener información del integrante
+    const { data: integrante, error: errorIntegrante } = await supabase
+      .from("integrantes")
+      .select("inicio_cuotas, fecha_alta")
+      .eq("id", session.id)
+      .single();
 
-    if (error) return;
+    if (errorIntegrante || !integrante) {
+      console.error(
+        "Error obteniendo información del integrante:",
+        errorIntegrante
+      );
+      return;
+    }
 
     const hoy = new Date();
 
@@ -144,22 +149,153 @@ export default function Dashboard({ session }: DashboardProps) {
       "Diciembre",
     ];
 
-    let mesesPendientes = 0;
+    // Obtener todas las cuotas pagadas por el integrante
+    const { data: cuotasPagadas, error: errorCuotas } = await supabase
+      .from("cuotas")
+      .select("mes, anio")
+      .eq("integrante_id", session.id);
 
-    if (data && data.length > 0) {
-      const ultima = data[0];
+    if (errorCuotas) {
+      console.error("Error obteniendo cuotas:", errorCuotas);
+      return;
+    }
 
-      mesesPendientes =
-        (anioActual - ultima.anio) * 12 +
-        (mesActual - ultima.mes);
+    const cuotas = cuotasPagadas ?? [];
 
-      setUltimoPago(`${nombresMeses[ultima.mes - 1]} ${ultima.anio}`);
+    /*
+     * Ordenamos las cuotas de más reciente a más antigua
+     */
+    const cuotasOrdenadas = [...cuotas].sort((a, b) => {
+      const fechaA = a.anio * 12 + a.mes;
+      const fechaB = b.anio * 12 + b.mes;
+
+      return fechaB - fechaA;
+    });
+
+    /*
+     * Última cuota pagada
+     */
+    const ultimaCuota =
+      cuotasOrdenadas.length > 0
+        ? cuotasOrdenadas[0]
+        : null;
+
+    if (ultimaCuota) {
+      setUltimoPago(
+        `${nombresMeses[ultimaCuota.mes - 1]} ${ultimaCuota.anio}`
+      );
     } else {
-      mesesPendientes = mesActual;
       setUltimoPago("Sin pagos");
     }
 
-    setDeuda(Math.max(0, mesesPendientes) * 5);
+    /*
+     * ==========================================
+     * DETERMINAR DESDE CUÁNDO DEBE PAGAR
+     * ==========================================
+     *
+     * 1. Si tiene inicio_cuotas:
+     *    usamos esa fecha.
+     *
+     * 2. Si NO tiene inicio_cuotas pero tiene
+     *    cuotas pagadas:
+     *    usamos el mes siguiente a su última cuota.
+     *
+     * 3. Si no tiene inicio_cuotas y tampoco
+     *    tiene pagos:
+     *    usamos fecha_alta.
+     */
+
+    let mesInicio: number;
+    let anioInicio: number;
+
+    if (integrante.inicio_cuotas) {
+      // Caso 1: tiene inicio_cuotas
+
+      const fechaInicio = new Date(integrante.inicio_cuotas);
+
+      mesInicio = fechaInicio.getMonth() + 1;
+      anioInicio = fechaInicio.getFullYear();
+
+    } else if (ultimaCuota) {
+      // Caso 2: no tiene inicio_cuotas
+      // Empezamos desde el mes siguiente al último pagado
+
+      if (ultimaCuota.mes === 12) {
+        mesInicio = 1;
+        anioInicio = ultimaCuota.anio + 1;
+      } else {
+        mesInicio = ultimaCuota.mes + 1;
+        anioInicio = ultimaCuota.anio;
+      }
+
+    } else {
+      // Caso 3: nunca ha pagado
+      // Usamos fecha_alta
+
+      const fechaInicio = new Date(integrante.fecha_alta);
+
+      mesInicio = fechaInicio.getMonth() + 1;
+      anioInicio = fechaInicio.getFullYear();
+    }
+
+    /*
+     * ==========================================
+     * CALCULAR MESES ESPERADOS
+     * ==========================================
+     */
+
+    let mesesEsperados =
+      (anioActual - anioInicio) * 12 +
+      (mesActual - mesInicio) +
+      1;
+
+    // Todavía no ha llegado el inicio
+    if (
+      anioActual < anioInicio ||
+      (anioActual === anioInicio && mesActual < mesInicio)
+    ) {
+      mesesEsperados = 0;
+    }
+
+    /*
+     * ==========================================
+     * CONTAR CUOTAS VÁLIDAS
+     * ==========================================
+     *
+     * Solo contamos las cuotas que estén dentro
+     * del período correspondiente.
+     */
+
+    const fechaInicioNumerica =
+      anioInicio * 12 + mesInicio;
+
+    const fechaActualNumerica =
+      anioActual * 12 + mesActual;
+
+    const cuotasValidas = cuotas.filter((cuota) => {
+      const fechaCuota =
+        cuota.anio * 12 + cuota.mes;
+
+      return (
+        fechaCuota >= fechaInicioNumerica &&
+        fechaCuota <= fechaActualNumerica
+      );
+    });
+
+    /*
+     * ==========================================
+     * DEUDA
+     * ==========================================
+     */
+
+    const totalPagadas = cuotasValidas.length;
+
+    const mesesPendientes = Math.max(
+      0,
+      mesesEsperados - totalPagadas
+    );
+
+    setDeuda(mesesPendientes * 5);
   };
 
   const fetchMovimientos = async () => {
@@ -415,6 +551,32 @@ export default function Dashboard({ session }: DashboardProps) {
       {/* Cards superiores */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
 
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 border border-slate-200 dark:border-slate-800">
+          <p className="text-slate-500 text-sm">Caja actual</p>
+
+          <h2 className="text-3xl md:text-4xl font-bold mt-3 text-amber-500">
+            {cajaActual.toFixed(2)} €
+          </h2>
+
+          <p className="text-slate-500 text-sm mt-2">
+            Disponible
+          </p>
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 border border-slate-200 dark:border-slate-800">
+          <p className="text-slate-500 text-sm">
+            Cuotas pendientes
+          </p>
+
+          <h2 className="text-3xl md:text-4xl font-bold mt-3 text-red-500">
+            {deuda.toFixed(2)} €
+          </h2>
+
+          <p className="text-slate-500 text-sm mt-2">
+            Último mes pagado: {ultimoPago}
+          </p>
+        </div>
+
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 md:p-6 border border-slate-200 dark:border-slate-800">
           <p className="text-slate-500 text-sm">Integrantes</p>
 
@@ -433,18 +595,6 @@ export default function Dashboard({ session }: DashboardProps) {
             </span>
 
           </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 border border-slate-200 dark:border-slate-800">
-          <p className="text-slate-500 text-sm">Caja actual</p>
-
-          <h2 className="text-3xl md:text-4xl font-bold mt-3 text-amber-500">
-            {cajaActual.toFixed(2)} €
-          </h2>
-
-          <p className="text-slate-500 text-sm mt-2">
-            Disponible
-          </p>
         </div>
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 border border-slate-200 dark:border-slate-800">
@@ -480,20 +630,6 @@ export default function Dashboard({ session }: DashboardProps) {
               </p>
             </>
           )}
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-6 border border-slate-200 dark:border-slate-800">
-          <p className="text-slate-500 text-sm">
-            Cuotas pendientes
-          </p>
-
-          <h2 className="text-3xl md:text-4xl font-bold mt-3 text-red-500">
-            {deuda.toFixed(2)} €
-          </h2>
-
-          <p className="text-slate-500 text-sm mt-2">
-            Último mes pagado: {ultimoPago}
-          </p>
         </div>
 
       </div>

@@ -10,9 +10,17 @@ import Integrantes from "@/components/PanelIntegrantes/Integrantes/Integrantes";
 import MisCuotas from "@/components/PanelIntegrantes/MisCuotas/MisCuotas";
 import Cuotas from "@/components/PanelIntegrantes/Cuotas/Cuotas";
 
+import DashboardTesorera from "@/components/PanelIntegrantes/Dashboard/DashboardTesorera";
+import Movimientos from "@/components/PanelIntegrantes/Movimientos/Movimientos";
+
 import { supabase } from "@/lib/supabase";
 
-type Section = "Dashboard" | "Integrantes" | "MisCuotas" | "Cuotas";
+type Section =
+  | "Dashboard"
+  | "Integrantes"
+  | "MisCuotas"
+  | "Movimientos"
+  | "Cuotas";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -187,20 +195,6 @@ export default function DashboardPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                id="recordarme"
-                type="checkbox"
-                checked={recordarme}
-                onChange={(e) => setRecordarme(e.target.checked)}
-                className="accent-amber-500"
-              />
-
-              <label htmlFor="recordarme">
-                Recordarme
-              </label>
-            </div>
-
             {error && (
               <div className="rounded-xl bg-red-100 border border-red-300 text-red-700 px-4 py-3">
                 {error}
@@ -241,9 +235,18 @@ export default function DashboardPage() {
       />
       <div className="flex-1 md:ml-72 p-6 overflow-x-hidden pt-10">
 
-        {section === 'Dashboard' && <Dashboard session={session} />}
+        {section === "Dashboard" && (
+          session.rol === "Tesorera" ? (
+            <DashboardTesorera session={session} />
+          ) : (
+            <Dashboard session={session} />
+          )
+        )}
         {section === 'Integrantes' && <Integrantes integrantes={integrantes} />}
         {section === 'MisCuotas' && <MisCuotas session={session} />}
+        {section === "Movimientos" && (
+          <Movimientos session={session} />
+        )}
         {section === 'Cuotas' && <Cuotas integrantes={integrantes} session={session} />}
 
       </div>

@@ -11,6 +11,7 @@ type Integrante = {
     rol: string;
     imagen?: string | null;
     fecha_alta: Date;
+    inicio_cuotas?: string | null;
 };
 
 type Cuota = {
@@ -59,16 +60,69 @@ export default function Cuotas({ integrantes, session }: Props) {
     }, []);
 
     // =========================
-    // Registrar cuota
+    // Contar cuotas pagadas
     // =========================
 
     const cuotasPagadas = (integranteId: number) => {
-        return cuotas.filter(
-            (c) =>
-                c.integrante_id === integranteId &&
-                c.anio === new Date().getFullYear()
-        ).length;
+        const integrante = integrantes.find(
+            (i) => i.id === integranteId
+        );
+
+        if (!integrante) return 0;
+
+        const anioActual = new Date().getFullYear();
+
+        /*
+         * Si tiene inicio_cuotas utilizamos esa fecha.
+         * Si no tiene, utilizamos fecha_alta.
+         */
+        const fechaInicio = integrante.inicio_cuotas
+            ? new Date(integrante.inicio_cuotas)
+            : new Date(integrante.fecha_alta);
+
+        const anioInicio = fechaInicio.getFullYear();
+        const mesInicio = fechaInicio.getMonth() + 1;
+
+        /*
+         * Contamos únicamente las cuotas del año actual
+         * que estén dentro del período que le corresponde.
+         */
+        return cuotas.filter((c) => {
+            if (c.integrante_id !== integranteId) {
+                return false;
+            }
+
+            if (c.anio !== anioActual) {
+                return false;
+            }
+
+            /*
+             * Si empieza las cuotas este mismo año,
+             * no contamos enero, febrero, etc. anteriores
+             * a su mes de inicio.
+             */
+            if (
+                anioInicio === anioActual &&
+                c.mes < mesInicio
+            ) {
+                return false;
+            }
+
+            /*
+             * Si el inicio de cuotas es posterior al año actual,
+             * todavía no debería tener cuotas.
+             */
+            if (anioInicio > anioActual) {
+                return false;
+            }
+
+            return true;
+        }).length;
     };
+
+    // =========================
+    // Registrar cuota
+    // =========================
 
     const guardarMeses = async (
         anio: number,
@@ -89,7 +143,9 @@ export default function Cuotas({ integrantes, session }: Props) {
 
             // INSERTAR las nuevas
             for (const mes of meses) {
-                const existe = cuotasActuales.some((c) => c.mes === mes);
+                const existe = cuotasActuales.some(
+                    (c) => c.mes === mes
+                );
 
                 if (!existe) {
                     await fetch("/api/cuotas", {
@@ -98,7 +154,8 @@ export default function Cuotas({ integrantes, session }: Props) {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
-                            integrante_id: integranteSeleccionado.id,
+                            integrante_id:
+                                integranteSeleccionado.id,
                             mes,
                             anio,
                             responsable_id,
@@ -109,7 +166,8 @@ export default function Cuotas({ integrantes, session }: Props) {
 
             // ELIMINAR las desmarcadas
             for (const cuota of cuotasActuales) {
-                const sigueSeleccionada = meses.includes(cuota.mes);
+                const sigueSeleccionada =
+                    meses.includes(cuota.mes);
 
                 if (!sigueSeleccionada) {
                     await fetch("/api/cuotas", {
@@ -118,7 +176,8 @@ export default function Cuotas({ integrantes, session }: Props) {
                             "Content-Type": "application/json",
                         },
                         body: JSON.stringify({
-                            integrante_id: integranteSeleccionado.id,
+                            integrante_id:
+                                integranteSeleccionado.id,
                             mes: cuota.mes,
                             anio,
                             responsable_id,
@@ -128,6 +187,7 @@ export default function Cuotas({ integrantes, session }: Props) {
             }
 
             await cargarCuotas();
+
         } catch (error) {
             console.error(error);
             alert("Ha ocurrido un error.");
@@ -147,8 +207,10 @@ export default function Cuotas({ integrantes, session }: Props) {
     return (
         <>
             <div className="flex-1 min-h-screen bg-slate-100 dark:bg-slate-950 p-6">
+
                 {/* Header */}
                 <div className="mb-8">
+
                     <h1 className="text-4xl font-bold text-slate-800 dark:text-white">
                         Registrar cuotas
                     </h1>
@@ -156,67 +218,89 @@ export default function Cuotas({ integrantes, session }: Props) {
                     <p className="mt-2 text-slate-500 dark:text-slate-400">
                         Selecciona un integrante para registrar las cuotas.
                     </p>
+
                 </div>
 
                 {/* Buscador */}
                 <div className="mb-8">
+
                     <input
                         type="text"
                         placeholder="Buscar integrante..."
                         value={busqueda}
-                        onChange={(e) => setBusqueda(e.target.value)}
+                        onChange={(e) =>
+                            setBusqueda(e.target.value)
+                        }
                         className="
-w-full
-rounded-xl
-border
-border-slate-300
-dark:border-slate-700
-bg-white
-dark:bg-slate-900
-px-4
-py-2.5
-text-sm
-outline-none
-focus:border-amber-500
-focus:ring-2
-focus:ring-amber-500/20
-"
+                            w-full
+                            rounded-xl
+                            border
+                            border-slate-300
+                            dark:border-slate-700
+                            bg-white
+                            dark:bg-slate-900
+                            px-4
+                            py-2.5
+                            text-sm
+                            outline-none
+                            focus:border-amber-500
+                            focus:ring-2
+                            focus:ring-amber-500/20
+                        "
                     />
+
                 </div>
 
                 {/* Cards */}
-                <div className="
-grid 
-grid-cols-1
-xs:grid-cols-2
-sm:grid-cols-2
-lg:grid-cols-3
-xl:grid-cols-4
-gap-4
-md:gap-6
-">
+                <div
+                    className="
+                        grid
+                        grid-cols-1
+                        xs:grid-cols-2
+                        sm:grid-cols-2
+                        lg:grid-cols-3
+                        xl:grid-cols-4
+                        gap-4
+                        md:gap-6
+                    "
+                >
+
                     {integrantesFiltrados.map((integrante) => (
+
                         <CuotaCard
                             key={integrante.id}
                             integrante={integrante}
-                            cuotasPagadas={cuotasPagadas(integrante.id)}
-                            onClick={() => setIntegranteSeleccionado(integrante)}
+                            cuotasPagadas={cuotasPagadas(
+                                integrante.id
+                            )}
+                            onClick={() =>
+                                setIntegranteSeleccionado(
+                                    integrante
+                                )
+                            }
                         />
+
                     ))}
 
                 </div>
+
             </div>
 
             {/* Modal */}
             {integranteSeleccionado && (
+
                 <CuotasModal
                     open={!!integranteSeleccionado}
                     integrante={integranteSeleccionado}
                     cuotas={cuotas}
-                    onClose={() => setIntegranteSeleccionado(null)}
+                    onClose={() =>
+                        setIntegranteSeleccionado(null)
+                    }
                     onGuardar={guardarMeses}
                 />
+
             )}
+
         </>
     );
 }
