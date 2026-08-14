@@ -97,6 +97,7 @@ export default function DashboardPage() {
     const { data, error } = await supabase
       .from("integrantes")
       .select("*")
+      .neq("id", 15)
       .order("nombre");
 
     if (!error && data) {
