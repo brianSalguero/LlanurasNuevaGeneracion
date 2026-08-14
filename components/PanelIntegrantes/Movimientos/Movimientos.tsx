@@ -388,9 +388,9 @@ export default function Movimientos({ session }: DashboardProps) {
                         <button
                             type="button"
                             onClick={() => setFiltro("todos")}
-                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${filtro === "todos"
-                                ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm"
-                                : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
+                            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${filtro === "todos"
+                                    ? "bg-white dark:bg-slate-700 text-slate-800 dark:text-white shadow-sm"
+                                    : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
                                 }`}
                         >
                             Todos
@@ -402,9 +402,9 @@ export default function Movimientos({ session }: DashboardProps) {
                         <button
                             type="button"
                             onClick={() => setFiltro("ingresos")}
-                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${filtro === "ingresos"
-                                ? "bg-green-600 text-white shadow-sm"
-                                : "text-slate-500 hover:text-green-600 dark:hover:text-green-400"
+                            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${filtro === "ingresos"
+                                    ? "bg-green-600 text-white shadow-sm"
+                                    : "text-slate-500 hover:text-green-600 dark:hover:text-green-400"
                                 }`}
                         >
                             Ingresos
@@ -416,9 +416,9 @@ export default function Movimientos({ session }: DashboardProps) {
                         <button
                             type="button"
                             onClick={() => setFiltro("cuotas")}
-                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${filtro === "cuotas"
-                                ? "bg-blue-600 text-white shadow-sm"
-                                : "text-slate-500 hover:text-blue-600 dark:hover:text-blue-400"
+                            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${filtro === "cuotas"
+                                    ? "bg-blue-600 text-white shadow-sm"
+                                    : "text-slate-500 hover:text-blue-600 dark:hover:text-blue-400"
                                 }`}
                         >
                             Cuotas
@@ -430,9 +430,9 @@ export default function Movimientos({ session }: DashboardProps) {
                         <button
                             type="button"
                             onClick={() => setFiltro("gastos")}
-                            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${filtro === "gastos"
-                                ? "bg-red-500 text-white shadow-sm"
-                                : "text-slate-500 hover:text-red-500 dark:hover:text-red-400"
+                            className={`px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${filtro === "gastos"
+                                    ? "bg-red-500 text-white shadow-sm"
+                                    : "text-slate-500 hover:text-red-500 dark:hover:text-red-400"
                                 }`}
                         >
                             Gastos
