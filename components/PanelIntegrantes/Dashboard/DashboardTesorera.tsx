@@ -744,7 +744,7 @@ export default function DashboardTesorera({
   // =========================
 
   return (
-    <div className="flex-1 bg-slate-100 dark:bg-slate-950 min-h-screen p-6">
+    <div className="flex-1 bg-slate-100 dark:bg-slate-950 min-h-screen p-4 md:p-6">
 
       {/* HEADER */}
 

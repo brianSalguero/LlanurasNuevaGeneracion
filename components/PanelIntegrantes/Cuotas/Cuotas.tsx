@@ -206,7 +206,7 @@ export default function Cuotas({ integrantes, session }: Props) {
 
     return (
         <>
-            <div className="flex-1 min-h-screen bg-slate-100 dark:bg-slate-950 p-6">
+            <div className="flex-1 min-h-screen bg-slate-100 dark:bg-slate-950 p-4 md:p-6">
 
                 {/* Header */}
                 <div className="mb-8">

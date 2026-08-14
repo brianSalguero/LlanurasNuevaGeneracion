@@ -509,7 +509,7 @@ export default function Dashboard({ session }: DashboardProps) {
   };
 
   return (
-    <div className="flex-1 bg-slate-100 dark:bg-slate-950 min-h-screen p-6">
+    <div className="flex-1 bg-slate-100 dark:bg-slate-950 min-h-screen p-4 md:p-6">
 
       {/* Header */}
       <div className="mb-8 flex flex-col items-center text-center md:flex-row md:text-left md:items-center gap-5">
